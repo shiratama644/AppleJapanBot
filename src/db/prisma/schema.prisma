@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model LinkedPlayer {
+  discordId   String   @id @map("discord_id")
+  discordName String   @map("discord_name")
+  mcid        String
+  edition     String
+  headUrl     String   @map("head_url")
+  linkedAt    DateTime @default(now()) @map("linked_at")
+
+  @@map("linked_players")
+}
+
+model BotConfig {
+  key   String @id
+  value String
+
+  @@map("bot_config")
+}
