@@ -36,7 +36,7 @@ module.exports = {
         await interaction.reply({
           content: [
             `✅ \`/link\` コマンドをセットアップしました！`,
-            `- コマンド受付チャンネル: <#${config.discord.channelAId}> (共通設定)`,
+            `- コマンド受付チャンネル: <#${config.discord.channelInputId}> (共通設定)`,
             `- リスト表示チャンネル:   ${listChannel}`,
           ].join('\n'),
           ephemeral: true,

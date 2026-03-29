@@ -14,14 +14,14 @@ async function setupCommand(guildId, commandName, listChannelId) {
 
 /**
  * ギルド固有のリスト表示チャンネルを返す。未設定の場合は .env のデフォルト値を使用する。
- * コマンド受付チャンネルは config.discord.channelAId で一元管理する。
+ * コマンド受付チャンネルは config.discord.channelInputId で一元管理する。
  * @param {string} guildId
  * @returns {Promise<{ inputChannelId: string, listChannelId: string }>}
  */
 async function getEffectiveChannels(guildId) {
   const listChannelId =
     (await getGuildConfig(guildId, 'link_list_channel')) ?? config.discord.channelBId;
-  return { inputChannelId: config.discord.channelAId, listChannelId };
+  return { inputChannelId: config.discord.channelInputId, listChannelId };
 }
 
 module.exports = { setupCommand, getEffectiveChannels };

@@ -7,7 +7,7 @@ module.exports = {
     if (message.guildId !== config.discord.guildId) return;
 
     // すべてのコマンドはチャンネルAでのみ受け付ける
-    if (message.channelId !== config.discord.channelAId) return;
+    if (message.channelId !== config.discord.channelInputId) return;
 
     // config.bot.commandPrefix で始まるメッセージのみ処理する
     if (!message.content.startsWith(config.bot.commandPrefix)) return;
