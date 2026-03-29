@@ -27,26 +27,26 @@ client.once('clientReady', async () => {
  * @returns {{ edition: 'JE'|'BE', headUrl: string } | null}
  */
 async function resolvePlayer(mcid) {
-	  // JE判定: ashcon API でUUIDを取得
+	  // JE判定: PlayerDB API でUUIDを取得
 	  try {
-	    const res = await fetch(`https://api.ashcon.app/mojang/v2/user/${encodeURIComponent(mcid)}`);
+	    const res = await fetch(`https://playerdb.co/api/player/minecraft/${encodeURIComponent(mcid)}`);
 	    if (res.ok) {
 	      const data = await res.json();
-	      if (data.uuid) {
+	      if (data.success && data.data?.player?.id) {
 	        return {
 	          edition: 'JE',
-	          headUrl: `https://mc-heads.net/avatar/${data.uuid}/128`
+	          headUrl: `https://mc-heads.net/avatar/${data.data?.player?.id}/128`
 	        };
 	      }
 	    }
 	  } catch (_) {}
 
-	  // BE判定: GeyserMC API でXUIDを取得
+	  // BE判定: PlayerDB API でXUIDを取得
 	  try {
-	    const res = await fetch(`https://api.geysermc.org/v2/xbox/xuid/${encodeURIComponent(mcid)}`);
+	    const res = await fetch(`https://playerdb.co/api/player/xbox/${encodeURIComponent(mcid)}`);
 	    if (res.ok) {
 	      const data = await res.json();
-	      if (data.xuid) {
+	      if (data.success && data.data?.player?.id) {
 	        return {
 	          edition: 'BE',
 	          headUrl: `https://mc-heads.net/avatar/.${mcid}/128` // Floodgate仕様: BEプレイヤーはMCIDの先頭に . を付けることでJEと区別する
