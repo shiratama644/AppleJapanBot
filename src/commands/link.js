@@ -20,12 +20,11 @@ module.exports = {
    * @param {import('discord.js').ChatInputCommandInteraction} interaction
    */
   async execute(interaction) {
-    const { inputChannelId, listChannelId } = await getEffectiveChannels(interaction.guildId);
+    const { listChannelId } = await getEffectiveChannels(interaction.guildId);
 
-    // コマンド受付チャンネル以外では受け付けない
-    if (interaction.channelId !== inputChannelId) {
+    if (!listChannelId) {
       await interaction.reply({
-        content: `このコマンドは <#${inputChannelId}> でのみ使用できます。`,
+        content: '⚠️ `/link` コマンドがセットアップされていません。先に `/setup link` を実行してください。',
         ephemeral: true,
       });
       return;
