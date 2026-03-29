@@ -8,13 +8,15 @@ datasource db {
 }
 
 model LinkedPlayer {
-  discordId   String   @id @map("discord_id")
+  guildId     String   @map("guild_id")
+  discordId   String   @map("discord_id")
   discordName String   @map("discord_name")
   mcid        String
   edition     String
   headUrl     String   @map("head_url")
   linkedAt    DateTime @default(now()) @map("linked_at")
 
+  @@id([guildId, discordId])
   @@map("linked_players")
 }
 
@@ -23,4 +25,13 @@ model BotConfig {
   value String
 
   @@map("bot_config")
+}
+
+model GuildConfig {
+  guildId String @map("guild_id")
+  key     String
+  value   String
+
+  @@id([guildId, key])
+  @@map("guild_config")
 }

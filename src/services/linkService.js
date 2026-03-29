@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
-const { saveLink, getAllLinks, getConfig, setConfig } = require('../db/repositories/linkRepo');
+const { saveLink, getAllLinks } = require('../db/repositories/linkRepo');
+const { getGuildConfig, setGuildConfig } = require('../db/repositories/guildConfigRepo');
 
 // Discord メッセージ1件に含められる Embed の上限
 const MAX_EMBEDS_PER_MESSAGE = 10;
@@ -69,13 +70,16 @@ function buildEmbeds(players) {
 
 /**
  * チャンネルBの連携リストメッセージを更新（なければ新規作成）する。
+ * @param {import('discord.js').Client} client
+ * @param {string} listChannelId - リスト表示チャンネルID
+ * @param {string} guildId       - ギルドID（メッセージIDをギルドごとに管理するため）
  */
-async function updateListMessage(client, channelBId) {
-  const channelB = await client.channels.fetch(channelBId);
-  const players  = await getAllLinks();
+async function updateListMessage(client, listChannelId, guildId) {
+  const channelB = await client.channels.fetch(listChannelId);
+  const players  = await getAllLinks(guildId);
   const embeds   = buildEmbeds(players);
 
-  const msgId = await getConfig('list_message_id');
+  const msgId = await getGuildConfig(guildId, 'link_list_message_id');
   if (msgId) {
     try {
       const msg = await channelB.messages.fetch(msgId);
@@ -87,19 +91,25 @@ async function updateListMessage(client, channelBId) {
   }
 
   const msg = await channelB.send({ embeds });
-  await setConfig('list_message_id', msg.id);
+  await setGuildConfig(guildId, 'link_list_message_id', msg.id);
 }
 
 /**
  * MCIDをDiscordユーザーと連携し、リストを更新する。
- * @returns {{ edition: 'JE'|'BE', headUrl: string } | null} 登録したプレイヤー情報、見つからなければ null
+ * @param {import('discord.js').Client} client
+ * @param {string} listChannelId - リスト表示チャンネルID
+ * @param {string} guildId       - ギルドID
+ * @param {string} discordId
+ * @param {string} discordName
+ * @param {string} mcid
+ * @returns {Promise<{ edition: 'JE'|'BE', headUrl: string } | null>} 登録したプレイヤー情報、見つからなければ null
  */
-async function registerLink(client, channelBId, discordId, discordName, mcid) {
+async function registerLink(client, listChannelId, guildId, discordId, discordName, mcid) {
   const player = await resolvePlayer(mcid);
   if (!player) return null;
 
-  await saveLink(discordId, discordName, mcid, player.edition, player.headUrl);
-  await updateListMessage(client, channelBId);
+  await saveLink(guildId, discordId, discordName, mcid, player.edition, player.headUrl);
+  await updateListMessage(client, listChannelId, guildId);
 
   return player;
 }

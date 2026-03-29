@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { registerLink } = require('../services/linkService');
+const { getEffectiveChannels } = require('../services/setupService');
 const config = require('../config/config');
 const logger = require('../utils/logger');
 
@@ -19,10 +20,12 @@ module.exports = {
    * @param {import('discord.js').ChatInputCommandInteraction} interaction
    */
   async execute(interaction) {
+    const { inputChannelId, listChannelId } = await getEffectiveChannels(interaction.guildId);
+
     // コマンド受付チャンネル以外では受け付けない
-    if (interaction.channelId !== config.discord.channelAId) {
+    if (interaction.channelId !== inputChannelId) {
       await interaction.reply({
-        content: `このコマンドは <#${config.discord.channelAId}> でのみ使用できます。`,
+        content: `このコマンドは <#${inputChannelId}> でのみ使用できます。`,
         ephemeral: true,
       });
       return;
@@ -35,7 +38,8 @@ module.exports = {
       const discordName = interaction.member?.displayName ?? interaction.user.username;
       const player = await registerLink(
         interaction.client,
-        config.discord.channelBId,
+        listChannelId,
+        interaction.guildId,
         interaction.user.id,
         discordName,
         mcid,
