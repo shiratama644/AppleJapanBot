@@ -1,6 +1,11 @@
 require('dotenv').config();
 
 module.exports = {
+  bot: {
+    // テキストコマンドのプレフィックス文字（例: '!' → `!link`、'?' → `?link`）
+    // スラッシュコマンドはDiscordが '/' を管理するため、このプレフィックスはテキストコマンドにのみ適用されます
+    commandPrefix: process.env.COMMAND_PREFIX || '/',
+  },
   discord: {
     token: process.env.DISCORD_TOKEN,
     guildId: process.env.GUILD_ID || '1475040943240384697',

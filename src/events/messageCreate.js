@@ -1,4 +1,3 @@
-const { handleLinkCommand } = require('../commands/link');
 const config = require('../config/config');
 
 module.exports = {
@@ -10,8 +9,9 @@ module.exports = {
     // すべてのコマンドはチャンネルAでのみ受け付ける
     if (message.channelId !== config.discord.channelAId) return;
 
-    if (message.content.startsWith('!link ')) {
-      await handleLinkCommand(message);
-    }
+    // config.bot.commandPrefix で始まるメッセージのみ処理する
+    if (!message.content.startsWith(config.bot.commandPrefix)) return;
+
+    // 将来のテキストコマンドをここに追加する
   },
 };

@@ -1,40 +1,55 @@
+const { SlashCommandBuilder } = require('discord.js');
 const { registerLink } = require('../services/linkService');
 const config = require('../config/config');
 const logger = require('../utils/logger');
 
-/**
- * `!link <MCID>` コマンドを処理する。
- * MCIDを解決してDBに保存し、連携リストを更新する。
- */
-async function handleLinkCommand(message) {
-  const mcid = message.content.slice('!link '.length).trim();
-  if (!mcid) {
-    await message.reply('使い方: `!link <MCID>`');
-    return;
-  }
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('link')
+    .setDescription('DiscordアカウントとMinecraft IDを連携します')
+    .addStringOption(option =>
+      option
+        .setName('mcid')
+        .setDescription('MinecraftのプレイヤーID（例: Steve）')
+        .setRequired(true),
+    ),
 
-  const loadingMsg = await message.reply('⏳ プレイヤー情報を確認中...');
-
-  try {
-    const discordName = message.member?.displayName ?? message.author.username;
-    const player = await registerLink(
-      message.client,
-      config.discord.channelBId,
-      message.author.id,
-      discordName,
-      mcid,
-    );
-
-    if (!player) {
-      await loadingMsg.edit('❌ MCIDが見つかりませんでした。JE・BEどちらでも存在しないIDです。');
+  /**
+   * `/link <mcid>` スラッシュコマンドを処理する。
+   * @param {import('discord.js').ChatInputCommandInteraction} interaction
+   */
+  async execute(interaction) {
+    // コマンド受付チャンネル以外では受け付けない
+    if (interaction.channelId !== config.discord.channelAId) {
+      await interaction.reply({
+        content: `このコマンドは <#${config.discord.channelAId}> でのみ使用できます。`,
+        ephemeral: true,
+      });
       return;
     }
 
-    await loadingMsg.edit(`✅ \`${mcid}\` (${player.edition}) を **${discordName}** として登録しました！`);
-  } catch (err) {
-    logger.error('!link エラー:', err);
-    await loadingMsg.edit('⚠️ エラーが発生しました。しばらくしてから再試行してください。');
-  }
-}
+    const mcid = interaction.options.getString('mcid');
+    await interaction.deferReply();
 
-module.exports = { handleLinkCommand };
+    try {
+      const discordName = interaction.member?.displayName ?? interaction.user.username;
+      const player = await registerLink(
+        interaction.client,
+        config.discord.channelBId,
+        interaction.user.id,
+        discordName,
+        mcid,
+      );
+
+      if (!player) {
+        await interaction.editReply('❌ MCIDが見つかりませんでした。JE・BEどちらでも存在しないIDです。');
+        return;
+      }
+
+      await interaction.editReply(`✅ \`${mcid}\` (${player.edition}) を **${discordName}** として登録しました！`);
+    } catch (err) {
+      logger.error(`${config.bot.commandPrefix}link エラー:`, err);
+      await interaction.editReply('⚠️ エラーが発生しました。しばらくしてから再試行してください。');
+    }
+  },
+};
