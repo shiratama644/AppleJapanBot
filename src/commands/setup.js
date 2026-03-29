@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
 const { setupCommand } = require('../services/setupService');
+const config = require('../config/config');
 const logger = require('../utils/logger');
 
 module.exports = {
@@ -11,13 +12,6 @@ module.exports = {
       subcommand
         .setName('link')
         .setDescription('Minecraft連携 (/link) 機能をセットアップします')
-        .addChannelOption(option =>
-          option
-            .setName('input_channel')
-            .setDescription('/link コマンドを受け付けるチャンネル')
-            .addChannelTypes(ChannelType.GuildText)
-            .setRequired(true),
-        )
         .addChannelOption(option =>
           option
             .setName('list_channel')
@@ -35,15 +29,14 @@ module.exports = {
     const subcommand = interaction.options.getSubcommand();
 
     if (subcommand === 'link') {
-      const inputChannel = interaction.options.getChannel('input_channel');
-      const listChannel  = interaction.options.getChannel('list_channel');
+      const listChannel = interaction.options.getChannel('list_channel');
 
       try {
-        await setupCommand(interaction.guildId, 'link', inputChannel.id, listChannel.id);
+        await setupCommand(interaction.guildId, 'link', listChannel.id);
         await interaction.reply({
           content: [
             `✅ \`/link\` コマンドをセットアップしました！`,
-            `- コマンド受付チャンネル: ${inputChannel}`,
+            `- コマンド受付チャンネル: <#${config.discord.channelAId}> (共通設定)`,
             `- リスト表示チャンネル:   ${listChannel}`,
           ].join('\n'),
           ephemeral: true,
