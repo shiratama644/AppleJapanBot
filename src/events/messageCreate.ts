@@ -1,8 +1,10 @@
-const config = require('../config/config');
+import type { Message } from 'discord.js';
+import type { BotEvent } from '../types/index';
+import config from '../config/config';
 
-module.exports = {
+const messageCreate: BotEvent<'messageCreate'> = {
   name: 'messageCreate',
-  async execute(message) {
+  async execute(message: Message): Promise<void> {
     if (message.author.bot) return;
     if (message.guildId !== config.discord.guildId) return;
 
@@ -15,3 +17,5 @@ module.exports = {
     // 将来のテキストコマンドをここに追加する
   },
 };
+
+export default messageCreate;

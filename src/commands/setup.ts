@@ -1,9 +1,11 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { setupCommand } = require('../services/setupService');
-const config = require('../config/config');
-const logger = require('../utils/logger');
+import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import type { ChatInputCommandInteraction } from 'discord.js';
+import type { Command } from '../types/index';
+import { setupCommand } from '../services/setupService';
+import config from '../config/config';
+import logger from '../utils/logger';
 
-module.exports = {
+const setup: Command = {
   data: new SlashCommandBuilder()
     .setName('setup')
     .setDescription('ボットの各機能をこのサーバー向けにセットアップします')
@@ -14,16 +16,16 @@ module.exports = {
         .setDescription('Minecraft連携 (/link) 機能をセットアップします。このコマンドを実行したチャンネルが連携リスト表示チャンネルになります。'),
     ),
 
-  /**
-   * `/setup <subcommand>` を処理する。
-   * @param {import('discord.js').ChatInputCommandInteraction} interaction
-   */
-  async execute(interaction) {
+  /** `/setup <subcommand>` を処理する。 */
+  async execute(interaction: ChatInputCommandInteraction): Promise<void> {
+    const guildId = interaction.guildId;
+    if (!guildId) return;
+
     const subcommand = interaction.options.getSubcommand();
 
     if (subcommand === 'link') {
       try {
-        await setupCommand(interaction.guildId, 'link', interaction.channelId);
+        await setupCommand(guildId, 'link', interaction.channelId);
         await interaction.reply({
           content: [
             `✅ \`/link\` コマンドをセットアップしました！`,
@@ -42,3 +44,5 @@ module.exports = {
     }
   },
 };
+
+export default setup;

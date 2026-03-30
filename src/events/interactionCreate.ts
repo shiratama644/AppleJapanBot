@@ -1,18 +1,23 @@
-const config = require('../config/config');
-const logger = require('../utils/logger');
+import { GuildMember } from 'discord.js';
+import type { Interaction } from 'discord.js';
+import type { BotEvent } from '../types/index';
+import config from '../config/config';
+import logger from '../utils/logger';
 
-module.exports = {
+const interactionCreate: BotEvent<'interactionCreate'> = {
   name: 'interactionCreate',
-  async execute(interaction) {
+  async execute(interaction: Interaction): Promise<void> {
     if (!interaction.isChatInputCommand()) return;
 
     const command = interaction.client.commands.get(interaction.commandName);
     if (!command) return;
 
     // チャンネル制限: 特権ロールを持たないユーザーは CHANNEL_INPUT_ID でのみコマンドを実行可能
-    const hasPrivilegedRole = config.discord.privilegedRoleIds.some(
-      id => interaction.member?.roles?.cache?.has(id),
-    );
+    const member = interaction.member;
+    const hasPrivilegedRole = member instanceof GuildMember
+      ? config.discord.privilegedRoleIds.some(id => member.roles.cache.has(id))
+      : false;
+
     if (!hasPrivilegedRole && interaction.channelId !== config.discord.channelInputId) {
       await interaction.reply({
         content: `このコマンドは <#${config.discord.channelInputId}> でのみ使用できます。`,
@@ -34,3 +39,5 @@ module.exports = {
     }
   },
 };
+
+export default interactionCreate;

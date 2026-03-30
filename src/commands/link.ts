@@ -1,10 +1,12 @@
-const { SlashCommandBuilder } = require('discord.js');
-const { registerLink } = require('../services/linkService');
-const { getEffectiveChannels } = require('../services/setupService');
-const config = require('../config/config');
-const logger = require('../utils/logger');
+import { SlashCommandBuilder, GuildMember } from 'discord.js';
+import type { ChatInputCommandInteraction } from 'discord.js';
+import type { Command } from '../types/index';
+import { registerLink } from '../services/linkService';
+import { getEffectiveChannels } from '../services/setupService';
+import config from '../config/config';
+import logger from '../utils/logger';
 
-module.exports = {
+const link: Command = {
   data: new SlashCommandBuilder()
     .setName('link')
     .setDescription('DiscordアカウントとMinecraft IDを連携します')
@@ -15,12 +17,12 @@ module.exports = {
         .setRequired(true),
     ),
 
-  /**
-   * `/link <mcid>` スラッシュコマンドを処理する。
-   * @param {import('discord.js').ChatInputCommandInteraction} interaction
-   */
-  async execute(interaction) {
-    const { listChannelId } = await getEffectiveChannels(interaction.guildId);
+  /** `/link <mcid>` スラッシュコマンドを処理する。 */
+  async execute(interaction: ChatInputCommandInteraction): Promise<void> {
+    const guildId = interaction.guildId;
+    if (!guildId) return;
+
+    const { listChannelId } = await getEffectiveChannels(guildId);
 
     if (!listChannelId) {
       await interaction.reply({
@@ -30,15 +32,18 @@ module.exports = {
       return;
     }
 
-    const mcid = interaction.options.getString('mcid');
+    const mcid = interaction.options.getString('mcid', true);
     await interaction.deferReply();
 
     try {
-      const discordName = interaction.member?.displayName ?? interaction.user.username;
+      const discordName = interaction.member instanceof GuildMember
+        ? interaction.member.displayName
+        : interaction.user.username;
+
       const player = await registerLink(
         interaction.client,
         listChannelId,
-        interaction.guildId,
+        guildId,
         interaction.user.id,
         discordName,
         mcid,
@@ -56,3 +61,5 @@ module.exports = {
     }
   },
 };
+
+export default link;
