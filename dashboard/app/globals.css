@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-discord-bg text-discord-text antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  /* スクロールバー */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-discord-bg;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-discord-border rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-discord-blurple;
+  }
+
+  *:focus-visible {
+    @apply outline-none ring-2 ring-discord-blurple ring-offset-2 ring-offset-discord-bg;
+  }
+}
+
+@layer utilities {
+  /* ローディングシマー */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      theme('colors.discord.card') 25%,
+      theme('colors.discord.border') 50%,
+      theme('colors.discord.card') 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+  }
+}

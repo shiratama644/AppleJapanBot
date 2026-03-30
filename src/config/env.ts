@@ -12,6 +12,16 @@ const EnvSchema = z.object({
   COMMAND_PREFIX: z.string().default('/'),
   /** PostgreSQL 接続URL（例: postgresql://user:pass@host:5432/db） */
   DATABASE_URL: z.string().min(1).startsWith('postgresql://', 'DATABASE_URL は postgresql:// で始まる必要があります。').optional(),
+  /** Webダッシュボードのポート番号（デフォルト: 3000） */
+  DASHBOARD_PORT: z.coerce.number().int().positive().default(3000),
+  /** セッション署名用シークレット（ダッシュボード有効化に必須） */
+  SESSION_SECRET: z.string().min(1).optional(),
+  /** Discord OAuth2 アプリのクライアントID */
+  DISCORD_CLIENT_ID: z.string().min(1).optional(),
+  /** Discord OAuth2 アプリのクライアントシークレット */
+  DISCORD_CLIENT_SECRET: z.string().min(1).optional(),
+  /** Discord OAuth2 コールバックURL（例: http://localhost:3000/auth/callback） */
+  DISCORD_REDIRECT_URI: z.string().url().optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

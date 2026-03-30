@@ -3,6 +3,7 @@ import fs from 'fs';
 import client from './client';
 import config from './config/config';
 import type { Command, BotEvent } from './types/index';
+import { startDashboard } from './dashboard/server';
 
 // tsx（開発時）は .ts を、コンパイル済み（本番）は .js を読み込む
 const ext = __filename.endsWith('.ts') ? '.ts' : '.js';
@@ -41,3 +42,6 @@ for (const filePath of scanFiles(path.join(__dirname, 'events'), ext)) {
 }
 
 client.login(config.discord.token);
+
+// Webダッシュボードを起動する（必須環境変数が設定されている場合のみ）
+startDashboard(client);
