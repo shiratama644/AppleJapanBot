@@ -2,6 +2,7 @@ import { EmbedBuilder, TextChannel } from 'discord.js';
 import type { Client } from 'discord.js';
 import { saveLink, getAllLinks, type Edition, type LinkedPlayer } from '../db/repositories/linkRepo';
 import { getGuildConfig, setGuildConfig } from '../db/repositories/guildConfigRepo';
+import { PlayerDbResponseSchema } from '../schemas/playerdb';
 import logger from '../utils/logger';
 
 // Discord メッセージ1件に含められる Embed の上限
@@ -22,11 +23,11 @@ export async function resolvePlayer(mcid: string): Promise<ResolvedPlayer | null
   try {
     const res = await fetch(`https://playerdb.co/api/player/minecraft/${encodeURIComponent(mcid)}`);
     if (res.ok) {
-      const data = await res.json() as { success: boolean; data?: { player?: { id?: string } } };
-      if (data.success && data.data?.player?.id) {
+      const parsed = PlayerDbResponseSchema.safeParse(await res.json());
+      if (parsed.success && parsed.data.success && parsed.data.data?.player?.id) {
         return {
           edition: 'JE',
-          headUrl: `https://mc-heads.net/avatar/${data.data.player.id}/128`,
+          headUrl: `https://mc-heads.net/avatar/${parsed.data.data.player.id}/128`,
         };
       }
     }
@@ -38,8 +39,8 @@ export async function resolvePlayer(mcid: string): Promise<ResolvedPlayer | null
   try {
     const res = await fetch(`https://playerdb.co/api/player/xbox/${encodeURIComponent(mcid)}`);
     if (res.ok) {
-      const data = await res.json() as { success: boolean; data?: { player?: { id?: string } } };
-      if (data.success && data.data?.player?.id) {
+      const parsed = PlayerDbResponseSchema.safeParse(await res.json());
+      if (parsed.success && parsed.data.success && parsed.data.data?.player?.id) {
         return {
           edition: 'BE',
           // Floodgate仕様: BEプレイヤーはMCIDの先頭に . を付けることでJEと区別する

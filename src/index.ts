@@ -31,7 +31,7 @@ for (const filePath of scanFiles(path.join(__dirname, 'events'), ext)) {
   const event = mod.default;
   if (event?.name && event?.execute) {
     // ClientEvents の型マップを動的キーで絞り込むことは不可能なため型アサーションを使用
-    const handler = (...args: unknown[]) => void (event.execute as (...a: unknown[]) => unknown)(...args);
+    const handler = (...args: unknown[]) => { (event.execute as (...a: unknown[]) => void)(...args); };
     if (event.once) {
       (client.once as (e: string, fn: (...a: unknown[]) => void) => void)(event.name, handler);
     } else {
