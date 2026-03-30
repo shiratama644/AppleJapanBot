@@ -3,6 +3,7 @@ import type { ChatInputCommandInteraction } from 'discord.js';
 import type { Command } from '../types/index';
 import { registerLink } from '../services/linkService';
 import { getEffectiveChannels } from '../services/setupService';
+import { McidSchema } from '../schemas/mcid';
 import config from '../config/config';
 import logger from '../utils/logger';
 
@@ -32,7 +33,16 @@ const link: Command = {
       return;
     }
 
-    const mcid = interaction.options.getString('mcid', true);
+    const rawMcid = interaction.options.getString('mcid', true);
+    const mcidResult = McidSchema.safeParse(rawMcid);
+    if (!mcidResult.success) {
+      await interaction.reply({
+        content: `❌ ${mcidResult.error.issues[0].message}`,
+        ephemeral: true,
+      });
+      return;
+    }
+    const mcid = mcidResult.data;
     await interaction.deferReply();
 
     try {

@@ -1,6 +1,6 @@
 // 初期データ投入スクリプト（任意）
-// 使い方: npx tsx src/db/prisma/seed.ts
-import { db } from '../kysely';
+// 使い方: npx tsx src/db/seed.ts
+import { db } from './kysely';
 
 async function main(): Promise<void> {
   // 例: 初期設定を bot_config に投入する場合

@@ -7,36 +7,35 @@ import type { Command, BotEvent } from './types/index';
 // tsx（開発時）は .ts を、コンパイル済み（本番）は .js を読み込む
 const ext = __filename.endsWith('.ts') ? '.ts' : '.js';
 
-// src/commands/ 直下のコマンドファイルを client.commands に登録する
-const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith(ext));
+/** ディレクトリを再帰的にスキャンし、指定の拡張子を持つファイルパスを返す */
+function scanFiles(dir: string, suffix: string): string[] {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) return scanFiles(full, suffix);
+    return entry.name.endsWith(suffix) ? [full] : [];
+  });
+}
 
-for (const file of commandFiles) {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const mod = require(path.join(commandsPath, file)) as { default?: Command } | Command;
-  const command: Command | undefined = 'default' in mod ? mod.default : (mod as Command);
+// commands/ 配下（サブディレクトリ含む）のコマンドを登録する
+for (const filePath of scanFiles(path.join(__dirname, 'commands'), ext)) {
+  const mod = require(filePath) as { default?: Command };
+  const command = mod.default;
   if (command?.data) {
     client.commands.set(command.data.name, command);
   }
 }
 
-// src/events/ 配下のイベントファイルを自動登録する
-const eventsPath = path.join(__dirname, 'events');
-const eventFiles = fs.readdirSync(eventsPath).filter(f => f.endsWith(ext));
-
-for (const file of eventFiles) {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const mod = require(path.join(eventsPath, file)) as { default?: BotEvent } | BotEvent;
-  const event: BotEvent | undefined = 'default' in mod ? mod.default : (mod as BotEvent);
+// events/ 配下のイベントを登録する
+for (const filePath of scanFiles(path.join(__dirname, 'events'), ext)) {
+  const mod = require(filePath) as { default?: BotEvent };
+  const event = mod.default;
   if (event?.name && event?.execute) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handler = (...args: any[]) => (event.execute as (...a: any[]) => void)(...args);
+    // ClientEvents の型マップを動的キーで絞り込むことは不可能なため型アサーションを使用
+    const handler = (...args: unknown[]) => { (event.execute as (...a: unknown[]) => void)(...args); };
     if (event.once) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (client.once as any)(event.name, handler);
+      (client.once as (e: string, fn: (...a: unknown[]) => void) => void)(event.name, handler);
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (client.on as any)(event.name, handler);
+      (client.on as (e: string, fn: (...a: unknown[]) => void) => void)(event.name, handler);
     }
   }
 }
