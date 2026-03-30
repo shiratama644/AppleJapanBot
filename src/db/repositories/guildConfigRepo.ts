@@ -1,12 +1,15 @@
-import prisma from '../prisma/client';
+import { db } from '../kysely';
 
 /**
  * guild_config から値を取得する。
  */
 export async function getGuildConfig(guildId: string, key: string): Promise<string | null> {
-  const record = await prisma.guildConfig.findUnique({
-    where: { guildId_key: { guildId, key } },
-  });
+  const record = await db
+    .selectFrom('guildConfig')
+    .select('value')
+    .where('guildId', '=', guildId)
+    .where('key', '=', key)
+    .executeTakeFirst();
   return record?.value ?? null;
 }
 
@@ -14,9 +17,9 @@ export async function getGuildConfig(guildId: string, key: string): Promise<stri
  * guild_config に値を保存（既存は上書き）する。
  */
 export async function setGuildConfig(guildId: string, key: string, value: string): Promise<void> {
-  await prisma.guildConfig.upsert({
-    where:  { guildId_key: { guildId, key } },
-    update: { value },
-    create: { guildId, key, value },
-  });
+  await db
+    .insertInto('guildConfig')
+    .values({ guildId, key, value })
+    .onConflict(oc => oc.columns(['guildId', 'key']).doUpdateSet({ value }))
+    .execute();
 }

@@ -1,5 +1,2 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
-
-export default prisma;
+// このファイルは使用されていません。データベースクライアントは src/db/kysely.ts を使用してください。
+export {};

@@ -1,7 +1,6 @@
 import { EmbedBuilder, TextChannel } from 'discord.js';
 import type { Client } from 'discord.js';
-import type { LinkedPlayer } from '@prisma/client';
-import { saveLink, getAllLinks, type Edition } from '../db/repositories/linkRepo';
+import { saveLink, getAllLinks, type Edition, type LinkedPlayer } from '../db/repositories/linkRepo';
 import { getGuildConfig, setGuildConfig } from '../db/repositories/guildConfigRepo';
 
 // Discord メッセージ1件に含められる Embed の上限
