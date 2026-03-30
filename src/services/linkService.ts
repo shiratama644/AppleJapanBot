@@ -1,21 +1,28 @@
-const { EmbedBuilder } = require('discord.js');
-const { saveLink, getAllLinks } = require('../db/repositories/linkRepo');
-const { getGuildConfig, setGuildConfig } = require('../db/repositories/guildConfigRepo');
+import { EmbedBuilder, TextChannel } from 'discord.js';
+import type { Client } from 'discord.js';
+import type { LinkedPlayer } from '@prisma/client';
+import { saveLink, getAllLinks, type Edition } from '../db/repositories/linkRepo';
+import { getGuildConfig, setGuildConfig } from '../db/repositories/guildConfigRepo';
 
 // Discord メッセージ1件に含められる Embed の上限
 const MAX_EMBEDS_PER_MESSAGE = 10;
 
+/** resolvePlayer の返り値型 */
+export interface ResolvedPlayer {
+  edition: Edition;
+  headUrl: string;
+}
+
 /**
  * MCIDからJE/BEを判定し、エディション・プレイヤーヘッドURLを返す。
- * @param {string} mcid - 検索するMinecraft ID
- * @returns {Promise<{ edition: 'JE'|'BE', headUrl: string } | null>}
+ * @returns プレイヤー情報、見つからなければ null
  */
-async function resolvePlayer(mcid) {
+export async function resolvePlayer(mcid: string): Promise<ResolvedPlayer | null> {
   // JE判定: PlayerDB API でUUIDを取得
   try {
     const res = await fetch(`https://playerdb.co/api/player/minecraft/${encodeURIComponent(mcid)}`);
     if (res.ok) {
-      const data = await res.json();
+      const data = await res.json() as { success: boolean; data?: { player?: { id?: string } } };
       if (data.success && data.data?.player?.id) {
         return {
           edition: 'JE',
@@ -23,13 +30,13 @@ async function resolvePlayer(mcid) {
         };
       }
     }
-  } catch (_) {}
+  } catch (_) { /* JEとして見つからなければ BE を試みる */ }
 
   // BE判定: PlayerDB API でXUIDを取得
   try {
     const res = await fetch(`https://playerdb.co/api/player/xbox/${encodeURIComponent(mcid)}`);
     if (res.ok) {
-      const data = await res.json();
+      const data = await res.json() as { success: boolean; data?: { player?: { id?: string } } };
       if (data.success && data.data?.player?.id) {
         return {
           edition: 'BE',
@@ -38,17 +45,15 @@ async function resolvePlayer(mcid) {
         };
       }
     }
-  } catch (_) {}
+  } catch (_) { /* BEとしても見つからなければ null を返す */ }
 
   return null;
 }
 
 /**
  * 登録済みプレイヤー一覧からEmbedの配列を生成する（最大10件/メッセージ）。
- * @param {Array<import('@prisma/client').LinkedPlayer>} players - 連携済みプレイヤーの配列
- * @returns {import('discord.js').EmbedBuilder[]}
  */
-function buildEmbeds(players) {
+export function buildEmbeds(players: LinkedPlayer[]): EmbedBuilder[] {
   if (players.length === 0) {
     return [
       new EmbedBuilder()
@@ -70,19 +75,24 @@ function buildEmbeds(players) {
 
 /**
  * チャンネルBの連携リストメッセージを更新（なければ新規作成）する。
- * @param {import('discord.js').Client} client
- * @param {string} listChannelId - リスト表示チャンネルID
- * @param {string} guildId       - ギルドID（メッセージIDをギルドごとに管理するため）
  */
-async function updateListMessage(client, listChannelId, guildId) {
-  const channelB = await client.channels.fetch(listChannelId);
-  const players  = await getAllLinks(guildId);
-  const embeds   = buildEmbeds(players);
+export async function updateListMessage(
+  client: Client,
+  listChannelId: string,
+  guildId: string,
+): Promise<void> {
+  const channel = await client.channels.fetch(listChannelId);
+  if (!(channel instanceof TextChannel)) {
+    throw new Error(`チャンネル ${listChannelId} はテキストチャンネルではありません。`);
+  }
+
+  const players = await getAllLinks(guildId);
+  const embeds  = buildEmbeds(players);
 
   const msgId = await getGuildConfig(guildId, 'link_list_message_id');
   if (msgId) {
     try {
-      const msg = await channelB.messages.fetch(msgId);
+      const msg = await channel.messages.fetch(msgId);
       await msg.edit({ embeds });
       return;
     } catch (_) {
@@ -90,21 +100,22 @@ async function updateListMessage(client, listChannelId, guildId) {
     }
   }
 
-  const msg = await channelB.send({ embeds });
+  const msg = await channel.send({ embeds });
   await setGuildConfig(guildId, 'link_list_message_id', msg.id);
 }
 
 /**
  * MCIDをDiscordユーザーと連携し、リストを更新する。
- * @param {import('discord.js').Client} client
- * @param {string} listChannelId - リスト表示チャンネルID
- * @param {string} guildId       - ギルドID
- * @param {string} discordId
- * @param {string} discordName
- * @param {string} mcid
- * @returns {Promise<{ edition: 'JE'|'BE', headUrl: string } | null>} 登録したプレイヤー情報、見つからなければ null
+ * @returns 登録したプレイヤー情報、見つからなければ null
  */
-async function registerLink(client, listChannelId, guildId, discordId, discordName, mcid) {
+export async function registerLink(
+  client: Client,
+  listChannelId: string,
+  guildId: string,
+  discordId: string,
+  discordName: string,
+  mcid: string,
+): Promise<ResolvedPlayer | null> {
   const player = await resolvePlayer(mcid);
   if (!player) return null;
 
@@ -113,5 +124,3 @@ async function registerLink(client, listChannelId, guildId, discordId, discordNa
 
   return player;
 }
-
-module.exports = { registerLink, updateListMessage };

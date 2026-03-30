@@ -1,11 +1,13 @@
-const { REST, Routes } = require('discord.js');
-const config = require('../config/config');
-const logger = require('../utils/logger');
+import { REST, Routes } from 'discord.js';
+import type { Client } from 'discord.js';
+import type { BotEvent } from '../types/index';
+import config from '../config/config';
+import logger from '../utils/logger';
 
-module.exports = {
+const ready: BotEvent<'ready'> = {
   name: 'ready',
   once: true,
-  async execute(client) {
+  async execute(client: Client<true>): Promise<void> {
     logger.info(`🤖 Logged in as ${client.user.tag}`);
 
     // スラッシュコマンドをギルドに登録する
@@ -23,3 +25,5 @@ module.exports = {
     }
   },
 };
+
+export default ready;

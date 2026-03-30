@@ -1,10 +1,20 @@
-const prisma = require('../prisma/client');
+import type { LinkedPlayer } from '@prisma/client';
+import prisma from '../prisma/client';
+
+/** MCIDのエディション種別 */
+export type Edition = 'JE' | 'BE';
 
 /**
  * MCIDとDiscordユーザーの連携を保存（既存は上書き）する。
- * @param {string} guildId
  */
-async function saveLink(guildId, discordId, discordName, mcid, edition, headUrl) {
+export async function saveLink(
+  guildId: string,
+  discordId: string,
+  discordName: string,
+  mcid: string,
+  edition: Edition,
+  headUrl: string,
+): Promise<void> {
   await prisma.linkedPlayer.upsert({
     where:  { guildId_discordId: { guildId, discordId } },
     update: { discordName, mcid, edition, headUrl },
@@ -14,13 +24,10 @@ async function saveLink(guildId, discordId, discordName, mcid, edition, headUrl)
 
 /**
  * ギルドの連携済みプレイヤーを登録日時昇順で全件取得する。
- * @param {string} guildId
  */
-async function getAllLinks(guildId) {
+export async function getAllLinks(guildId: string): Promise<LinkedPlayer[]> {
   return prisma.linkedPlayer.findMany({
     where:   { guildId },
     orderBy: { linkedAt: 'asc' },
   });
 }
-
-module.exports = { saveLink, getAllLinks };
