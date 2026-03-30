@@ -28,6 +28,7 @@ export function csrfProtect(req: Request, res: Response, next: NextFunction): vo
   if (
     typeof provided !== 'string' ||
     !req.session.csrfToken ||
+    provided.length !== req.session.csrfToken.length ||
     !crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(req.session.csrfToken))
   ) {
     res.status(403).json({ error: 'CSRFトークンの検証に失敗しました。ページを再読み込みしてください。' });

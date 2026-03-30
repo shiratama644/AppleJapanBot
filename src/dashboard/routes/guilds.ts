@@ -187,13 +187,17 @@ export function createGuildsRouter(client: Client): Router {
    */
   router.get('/me', requireAuth, (req, res): void => {
     const user = req.session.user!;
+    if (!req.session.csrfToken) {
+      res.status(500).json({ error: 'CSRFトークンが生成されていません。再度ログインしてください。' });
+      return;
+    }
     res.json({
       id: user.id,
       username: user.username,
       avatar: user.avatar
         ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
         : `https://cdn.discordapp.com/embed/avatars/0.png`,
-      csrfToken: req.session.csrfToken ?? '',
+      csrfToken: req.session.csrfToken,
     });
   });
 

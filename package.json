@@ -5,8 +5,9 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "postbuild": "cp -r src/dashboard/public dist/dashboard/public",
+    "dev:dashboard": "cd dashboard && npm run dev",
+    "build": "tsc && npm run build:dashboard",
+    "build:dashboard": "cd dashboard && npm install --prefer-offline && npm run build && node -e \"const{rmSync,cpSync}=require('fs');rmSync('../dist/dashboard/public',{recursive:true,force:true});cpSync('out','../dist/dashboard/public',{recursive:true})\"",
     "start": "node dist/index.js"
   },
   "dependencies": {

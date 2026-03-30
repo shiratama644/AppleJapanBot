@@ -141,3 +141,8 @@ vite.config.ts.timestamp-*
 # Prisma generated files
 *.db
 *.db-journal
+
+# Next.js dashboard build artifacts
+dashboard/.next/
+dashboard/out/
+dashboard/node_modules/

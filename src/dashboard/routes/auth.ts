@@ -65,7 +65,7 @@ export function createAuthRouter(): Router {
       accessToken: tokenData.access_token,
     };
 
-    res.redirect('/dashboard.html');
+    res.redirect('/dashboard');
   });
 
   // ログアウト: セッションを破棄してトップへ

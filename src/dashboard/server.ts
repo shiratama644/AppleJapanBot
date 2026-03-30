@@ -51,8 +51,9 @@ export function startDashboard(client: Client): void {
     }),
   );
 
-  // 静的ファイル（HTML/CSS/JS）
-  app.use(express.static(path.join(__dirname, 'public')));
+  // 静的ファイル（Next.js の静的エクスポート出力）
+  // extensions: ['html'] により /dashboard → dashboard.html のように .html 省略アクセスを可能にする
+  app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
   // 認証ルート
   app.use('/auth', createAuthRouter());
