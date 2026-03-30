@@ -6,9 +6,6 @@ export interface BotConfig {
 
 export interface DiscordConfig {
   token: string;
-  guildId: string;
-  /** コマンド受付チャンネルID（すべてのコマンドで共通） */
-  channelInputId: string;
   /** チャンネル制限を免除する特権ロールID一覧 */
   privilegedRoleIds: readonly string[];
 }
@@ -27,8 +24,6 @@ const config: Config = {
   },
   discord: {
     token: env.DISCORD_TOKEN,
-    guildId: env.GUILD_ID,
-    channelInputId: env.CHANNEL_INPUT_ID,
     // チャンネル制限を免除する特権ロールID（これらのロールを持つユーザーはどこでもコマンドを実行可能）
     privilegedRoleIds: [
       '1475052442482774037',
