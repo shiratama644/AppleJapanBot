@@ -14,6 +14,18 @@ export async function getGuildConfig(guildId: string, key: string): Promise<stri
 }
 
 /**
+ * guild_config からギルドのすべての設定をキー・バリューのオブジェクトで返す。
+ */
+export async function getAllGuildConfig(guildId: string): Promise<Record<string, string>> {
+  const rows = await db
+    .selectFrom('guildConfig')
+    .select(['key', 'value'])
+    .where('guildId', '=', guildId)
+    .execute();
+  return Object.fromEntries(rows.map(r => [r.key, r.value]));
+}
+
+/**
  * guild_config に値を保存（既存は上書き）する。
  */
 export async function setGuildConfig(guildId: string, key: string, value: string): Promise<void> {

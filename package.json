@@ -6,16 +6,21 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
+    "postbuild": "cp -r src/dashboard/public dist/dashboard/public",
     "start": "node dist/index.js"
   },
   "dependencies": {
     "discord.js": "^14.25.1",
     "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
     "kysely": "^0.28.14",
     "pg": "^8.20.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/express-session": "^1.18.2",
     "@types/node": "^25.5.0",
     "@types/pg": "^8.20.0",
     "nodemon": "^3.1.14",

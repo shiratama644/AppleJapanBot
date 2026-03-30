@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>サーバー設定 – AppleJapanBot</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body { background: #1e1f22; color: #dbdee1; min-height: 100vh; }
+    .navbar { background: #111214 !important; border-bottom: 1px solid #2b2d31; }
+    .navbar-brand { color: #fff !important; font-weight: 700; }
+    .user-info { color: #949ba4; font-size: 0.9rem; }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; margin-right: 8px; }
+    .breadcrumb-item a { color: #5865f2; text-decoration: none; }
+    .breadcrumb-item a:hover { text-decoration: underline; }
+    .breadcrumb-item.active { color: #949ba4; }
+    .breadcrumb-separator { color: #4e5058; }
+    .page-header { padding: 32px 0 8px; display: flex; align-items: center; gap: 16px; }
+    .page-header img { width: 56px; height: 56px; border-radius: 50%; }
+    .page-header .placeholder-icon {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: #5865f2; display: flex; align-items: center;
+      justify-content: center; font-size: 1.5rem; color: #fff; font-weight: 700;
+    }
+    .page-header h2 { color: #fff; font-weight: 700; margin: 0; }
+    .settings-card {
+      background: #2b2d31; border-radius: 12px; padding: 28px;
+      margin-bottom: 20px;
+    }
+    .settings-card h5 { color: #fff; font-weight: 600; margin-bottom: 4px; }
+    .settings-card .desc { color: #949ba4; font-size: 0.9rem; margin-bottom: 20px; }
+    .form-label { color: #b5bac1; font-size: 0.9rem; font-weight: 500; }
+    .form-select {
+      background: #1e1f22; color: #dbdee1; border: 1px solid #3f4147;
+    }
+    .form-select:focus { border-color: #5865f2; box-shadow: 0 0 0 2px rgba(88,101,242,.3); background: #1e1f22; color: #dbdee1; }
+    .form-select option { background: #1e1f22; color: #dbdee1; }
+    .save-btn {
+      background: #5865f2; border: none; padding: 8px 20px; border-radius: 6px;
+      color: #fff; font-weight: 600; cursor: pointer; transition: background 0.15s;
+    }
+    .save-btn:hover:not(:disabled) { background: #4752c4; }
+    .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; }
+    .toast { background: #2b2d31; color: #dbdee1; border: 1px solid #3f4147; border-radius: 8px; }
+    .toast.success { border-color: #23a55a; }
+    .toast.error { border-color: #f23f42; }
+    .logout-btn { color: #949ba4; text-decoration: none; font-size: 0.9rem; }
+    .logout-btn:hover { color: #f23f42; }
+    #loading { text-align: center; padding: 60px 0; }
+    .spinner-border { color: #5865f2; }
+    .current-val { color: #949ba4; font-size: 0.82rem; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand" href="/dashboard.html">🤖 AppleJapanBot</a>
+      <div class="ms-auto d-flex align-items-center gap-3">
+        <div id="userInfo" class="user-info d-flex align-items-center"></div>
+        <a href="/auth/logout" class="logout-btn">ログアウト</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <nav aria-label="breadcrumb" class="mt-3">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/dashboard.html">サーバー一覧</a></li>
+        <li class="breadcrumb-item active" id="breadcrumbGuild">サーバー設定</li>
+      </ol>
+    </nav>
+
+    <div id="loading">
+      <div class="spinner-border mt-4" role="status">
+        <span class="visually-hidden">読み込み中...</span>
+      </div>
+      <p class="mt-3 text-secondary">設定を読み込んでいます...</p>
+    </div>
+
+    <div id="content" style="display:none">
+      <div class="page-header">
+        <div id="guildIcon"></div>
+        <h2 id="guildName"></h2>
+      </div>
+
+      <!-- コマンド受付チャンネル -->
+      <div class="settings-card mt-3">
+        <h5>⌨️ コマンド受付チャンネル</h5>
+        <p class="desc">
+          スラッシュコマンドを受け付けるチャンネルを設定します。
+          ここで設定したチャンネル以外からのコマンドは拒否されます（特権ロールを除く）。
+        </p>
+        <label class="form-label" for="commandInputChannel">チャンネルを選択</label>
+        <select id="commandInputChannel" class="form-select mt-1"></select>
+        <div class="current-val" id="currentCommandChannel"></div>
+        <button class="save-btn mt-3" onclick="saveConfig('command_input_channel', 'commandInputChannel', 'currentCommandChannel')">
+          保存する
+        </button>
+      </div>
+
+      <!-- 連携リスト表示チャンネル -->
+      <div class="settings-card">
+        <h5>📋 連携リスト表示チャンネル</h5>
+        <p class="desc">
+          /link コマンドで登録された Minecraft 連携リストを表示するチャンネルを設定します。
+        </p>
+        <label class="form-label" for="linkListChannel">チャンネルを選択</label>
+        <select id="linkListChannel" class="form-select mt-1"></select>
+        <div class="current-val" id="currentLinkChannel"></div>
+        <button class="save-btn mt-3" onclick="saveConfig('link_list_channel', 'linkListChannel', 'currentLinkChannel')">
+          保存する
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- トースト通知 -->
+  <div class="toast-container">
+    <div id="toast" class="toast align-items-center p-2 ps-3" role="alert" style="display:none">
+      <span id="toastMsg"></span>
+    </div>
+  </div>
+
+  <script>
+    const guildId = new URLSearchParams(location.search).get('id');
+    if (!guildId) location.href = '/dashboard.html';
+
+    let channelMap = {};
+    let csrfToken = '';
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function showToast(msg, type = 'success') {
+      const el = document.getElementById('toast');
+      const msgEl = document.getElementById('toastMsg');
+      el.className = `toast align-items-center p-2 ps-3 ${type}`;
+      msgEl.textContent = msg;
+      el.style.display = 'block';
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => { el.style.display = 'none'; }, 3000);
+    }
+
+    function buildChannelSelect(selectId, channels, currentValue, currentValId) {
+      const sel = document.getElementById(selectId);
+      sel.innerHTML = '<option value="">未設定</option>' +
+        channels.map(c => `<option value="${escHtml(c.id)}" ${c.id === currentValue ? 'selected' : ''}>#${escHtml(c.name)}</option>`).join('');
+      const curEl = document.getElementById(currentValId);
+      if (currentValue && channelMap[currentValue]) {
+        curEl.textContent = `現在の設定: #${channelMap[currentValue]}`;
+      } else if (currentValue) {
+        curEl.textContent = `現在の設定: ${currentValue}`;
+      } else {
+        curEl.textContent = '現在の設定: 未設定';
+      }
+    }
+
+    async function loadUser() {
+      const res = await fetch('/api/me');
+      if (!res.ok) { window.location.href = '/'; return; }
+      const user = await res.json();
+      csrfToken = user.csrfToken || '';
+      const div = document.getElementById('userInfo');
+      div.innerHTML = `<img class="user-avatar" src="${escHtml(user.avatar)}" alt="avatar"><span>${escHtml(user.username)}</span>`;
+    }
+
+    async function loadGuild() {
+      const res = await fetch(`/api/guilds/${encodeURIComponent(guildId)}`);
+      if (!res.ok) {
+        document.getElementById('loading').innerHTML = '<p class="text-danger mt-4">サーバー情報の取得に失敗しました。<a href="/dashboard.html">戻る</a></p>';
+        return;
+      }
+      const data = await res.json();
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+      document.getElementById('guildName').textContent = data.name;
+      document.getElementById('breadcrumbGuild').textContent = data.name;
+
+      const iconEl = document.getElementById('guildIcon');
+      if (data.icon) {
+        iconEl.innerHTML = `<img src="${escHtml(data.icon)}" alt="icon">`;
+      } else {
+        iconEl.innerHTML = `<div class="placeholder-icon">${escHtml(data.name[0] ?? '?')}</div>`;
+      }
+
+      // チャンネルマップを構築
+      data.channels.forEach(c => { channelMap[c.id] = c.name; });
+
+      buildChannelSelect('commandInputChannel', data.channels, data.config.command_input_channel || '', 'currentCommandChannel');
+      buildChannelSelect('linkListChannel', data.channels, data.config.link_list_channel || '', 'currentLinkChannel');
+    }
+
+    async function saveConfig(key, selectId, currentValId) {
+      const value = document.getElementById(selectId).value;
+      if (!value) { showToast('チャンネルを選択してください。', 'error'); return; }
+
+      const btn = document.querySelector(`button[onclick*="${selectId}"]`);
+      btn.disabled = true;
+      btn.textContent = '保存中...';
+
+      const res = await fetch(`/api/guilds/${encodeURIComponent(guildId)}/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+        body: JSON.stringify({ key, value }),
+      });
+
+      btn.disabled = false;
+      btn.textContent = '保存する';
+
+      if (res.ok) {
+        showToast('✅ 設定を保存しました。');
+        const curEl = document.getElementById(currentValId);
+        curEl.textContent = `現在の設定: #${channelMap[value] || value}`;
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(`❌ ${err.error || '保存に失敗しました。'}`, 'error');
+      }
+    }
+
+    loadUser();
+    loadGuild();
+  </script>
+</body>
+</html>
