@@ -22,15 +22,15 @@ const interactionCreate: BotEvent<'interactionCreate'> = {
       : false;
 
     if (!hasPrivilegedRole) {
-      let allowedChannelId = config.discord.channelInputId;
+      let configuredChannelId: string | null = null;
       if (interaction.guildId) {
         const guildChannel = await getGuildConfig(interaction.guildId, 'command_input_channel');
-        if (guildChannel) allowedChannelId = guildChannel;
+        if (guildChannel) configuredChannelId = guildChannel;
       }
 
-      if (interaction.channelId !== allowedChannelId) {
+      if (configuredChannelId && interaction.channelId !== configuredChannelId) {
         await interaction.reply({
-          content: `このコマンドは <#${allowedChannelId}> でのみ使用できます。`,
+          content: `このコマンドは <#${configuredChannelId}> でのみ使用できます。`,
           ephemeral: true,
         });
         return;

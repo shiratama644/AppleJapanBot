@@ -16,7 +16,7 @@ const ready: BotEvent<'ready'> = {
 
     try {
       await rest.put(
-        Routes.applicationGuildCommands(client.user.id, config.discord.guildId),
+        Routes.applicationCommands(client.user.id),
         { body: commands },
       );
       logger.info(`✅ スラッシュコマンドを登録しました (${commands.length}件)`);

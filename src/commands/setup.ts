@@ -2,7 +2,6 @@ import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import type { ChatInputCommandInteraction } from 'discord.js';
 import type { Command } from '../types/index';
 import { setupCommand } from '../services/setupService';
-import config from '../config/config';
 import logger from '../utils/logger';
 
 const setup: Command = {
@@ -29,7 +28,7 @@ const setup: Command = {
         await interaction.reply({
           content: [
             `✅ \`/link\` コマンドをセットアップしました！`,
-            `- コマンド受付チャンネル: <#${config.discord.channelInputId}> (共通設定)`,
+            `- コマンド受付チャンネル: ダッシュボードで設定してください`,
             `- リスト表示チャンネル:   ${interaction.channel}`,
           ].join('\n'),
           ephemeral: true,
