@@ -8,6 +8,8 @@ const EnvSchema = z.object({
   COMMAND_PREFIX: z.string().default('/'),
   /** PostgreSQL 接続URL（例: postgresql://user:pass@host:5432/db） */
   DATABASE_URL: z.string().min(1).startsWith('postgresql://', 'DATABASE_URL は postgresql:// で始まる必要があります。').optional(),
+  /** PostgreSQL SSL 接続を有効にするか（本番環境では true、ローカルでは false） */
+  DB_SSL: z.enum(['true', 'false']).default('false'),
   /** Webダッシュボードのポート番号（デフォルト: 3000） */
   DASHBOARD_PORT: z.coerce.number().int().positive().default(3000),
   /** セッション署名用シークレット（ダッシュボード有効化に必須） */

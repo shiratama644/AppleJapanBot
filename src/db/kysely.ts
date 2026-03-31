@@ -5,9 +5,11 @@ import type { DB } from './types';
 
 config();
 
+const useSSL = process.env.DB_SSL === 'true';
+
 const dialect = new PostgresDialect({
   pool: new Pool({
-    ssl: { rejectUnauthorized: false },
+    ...(useSSL ? { ssl: { rejectUnauthorized: false } } : {}),
     connectionString: process.env.DATABASE_URL,
   }),
 });
