@@ -4,6 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
+    "db:migrate": "tsx src/db/migrate.ts",
     "dev": "tsx watch src/index.ts",
     "dev:dashboard": "cd dashboard && pnpm dev",
     "build": "tsc && pnpm run build:dashboard",
