@@ -4,6 +4,8 @@ import client from './client';
 import config from './config/config';
 import type { Command, BotEvent } from './types/index';
 import { startDashboard } from './dashboard/server';
+import { migrate } from './db/migrate';
+import logger from './utils/logger';
 
 // tsx（開発時）は .ts を、コンパイル済み（本番）は .js を読み込む
 const ext = __filename.endsWith('.ts') ? '.ts' : '.js';
@@ -43,5 +45,15 @@ for (const filePath of scanFiles(path.join(__dirname, 'events'), ext)) {
 
 client.login(config.discord.token);
 
-// Webダッシュボードを起動する（必須環境変数が設定されている場合のみ）
-startDashboard(client);
+// DBマイグレーションを起動時に自動実行し、完了後にダッシュボードを起動する
+migrate()
+  .then(() => {
+    logger.info('✅ DBマイグレーション完了');
+    // Webダッシュボードを起動する（必須環境変数が設定されている場合のみ）
+    startDashboard(client);
+  })
+  .catch((e: unknown) => {
+    logger.error('❌ DBマイグレーション失敗:', e);
+    // マイグレーション失敗時もダッシュボードは起動する
+    startDashboard(client);
+  });

@@ -7,7 +7,7 @@
 import { db } from './kysely';
 import { sql } from 'kysely';
 
-async function migrate(): Promise<void> {
+export async function migrate(): Promise<void> {
   // linked_players テーブル
   // 複合ユニーク制約: (guild_id, discord_id)
   await db.schema
@@ -47,9 +47,12 @@ async function migrate(): Promise<void> {
   console.log('✅ マイグレーション完了');
 }
 
-migrate()
-  .catch((e: unknown) => {
-    console.error('❌ マイグレーション失敗:', e);
-    process.exit(1);
-  })
-  .finally(() => db.destroy());
+// スクリプトとして直接実行された場合のみ自動実行する
+if (require.main === module) {
+  migrate()
+    .catch((e: unknown) => {
+      console.error('❌ マイグレーション失敗:', e);
+      process.exit(1);
+    })
+    .finally(() => db.destroy());
+}
