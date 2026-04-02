@@ -1,6 +1,7 @@
 import express from 'express';
 import session from 'express-session';
 import path from 'path';
+import fs from 'fs';
 import type { Client } from 'discord.js';
 import { env } from '../config/env';
 import logger from '../utils/logger';
@@ -10,6 +11,9 @@ import { csrfProtect } from './middleware/csrf';
 
 // express-session の SessionData 拡張を読み込む
 import './types';
+
+// tsx で直接実行中（開発モード）かどうかを判定する
+const isDev = __filename.endsWith('.ts');
 
 /**
  * Webダッシュボードサーバーを起動する。
@@ -40,10 +44,9 @@ export function startDashboard(client: Client): void {
       secret: env.SESSION_SECRET,
       resave: false,
       saveUninitialized: false,
-      // セッションクッキーは常に HTTPS でのみ送信する（secure: true）
-      // ローカル開発では ngrok / cloudflare tunnel 等で HTTPS を用意してください
+      // 開発時（HTTP localhost）は secure: false にしてセッションが機能するようにする
       cookie: {
-        secure: true,
+        secure: !isDev,
         httpOnly: true,
         sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000,
@@ -52,8 +55,25 @@ export function startDashboard(client: Client): void {
   );
 
   // 静的ファイル（Next.js の静的エクスポート出力）
-  // extensions: ['html'] により /dashboard → dashboard.html のように .html 省略アクセスを可能にする
-  app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
+  // 開発時は pnpm build を実行していないため public/ が存在しない場合がある
+  const publicDir = path.join(__dirname, 'public');
+  if (fs.existsSync(publicDir)) {
+    // extensions: ['html'] により /dashboard → dashboard.html のように .html 省略アクセスを可能にする
+    app.use(express.static(publicDir, { extensions: ['html'] }));
+  } else if (isDev) {
+    // 開発時: フロントエンドの Next.js dev サーバー (port 3001) へ誘導するページを返す
+    const devPort = 3001;
+    app.get('/', (_req, res) => {
+      res.send(
+        `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">` +
+        `<meta http-equiv="refresh" content="0;url=http://localhost:${devPort}">` +
+        `<title>リダイレクト中...</title></head><body>` +
+        `<p>開発モードです。Next.js dev サーバー (<a href="http://localhost:${devPort}">http://localhost:${devPort}</a>) へリダイレクトしています...</p>` +
+        `<p>フロントエンドを起動するには別ターミナルで <code>pnpm dev:dashboard</code> を実行してください。</p>` +
+        `</body></html>`,
+      );
+    });
+  }
 
   // 認証ルート
   app.use('/auth', createAuthRouter());
