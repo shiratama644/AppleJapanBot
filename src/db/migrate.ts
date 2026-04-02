@@ -25,6 +25,21 @@ export async function migrate(): Promise<void> {
     .addUniqueConstraint('linked_players_guild_discord_unique', ['guild_id', 'discord_id'])
     .execute();
 
+  // 既存テーブルに guild_id カラムが不足している場合は追加する（古いスキーマからの移行用）
+  await sql`ALTER TABLE linked_players ADD COLUMN IF NOT EXISTS guild_id varchar(20) NOT NULL DEFAULT ''`.execute(db);
+
+  // 複合ユニーク制約が存在しない場合は追加する
+  await sql`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'linked_players_guild_discord_unique'
+      ) THEN
+        ALTER TABLE linked_players
+          ADD CONSTRAINT linked_players_guild_discord_unique UNIQUE (guild_id, discord_id);
+      END IF;
+    END $$`.execute(db);
+
   // bot_config テーブル
   await db.schema
     .createTable('bot_config')
