@@ -61,14 +61,15 @@ export function startDashboard(client: Client): void {
     // extensions: ['html'] により /dashboard → dashboard.html のように .html 省略アクセスを可能にする
     app.use(express.static(publicDir, { extensions: ['html'] }));
   } else if (isDev) {
-    // 開発時: フロントエンドの Next.js dev サーバー (port 3001) へ誘導するページを返す
+    // 開発時: フロントエンドの Next.js dev サーバー (port 3001) へリダイレクトする
     const devPort = 3001;
-    app.get('/', (_req, res) => {
+    app.get(['/', '/dashboard', '/dashboard/*path'], (req, res) => {
+      const targetUrl = `http://localhost:${devPort}`;
       res.send(
         `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">` +
-        `<meta http-equiv="refresh" content="0;url=http://localhost:${devPort}">` +
+        `<meta http-equiv="refresh" content="0;url=${targetUrl}${req.path === '/' ? '' : req.path}">` +
         `<title>リダイレクト中...</title></head><body>` +
-        `<p>開発モードです。Next.js dev サーバー (<a href="http://localhost:${devPort}">http://localhost:${devPort}</a>) へリダイレクトしています...</p>` +
+        `<p>開発モードです。Next.js dev サーバー (<a href="${targetUrl}">http://localhost:${devPort}</a>) へリダイレクトしています...</p>` +
         `<p>フロントエンドを起動するには別ターミナルで <code>pnpm dev:dashboard</code> を実行してください。</p>` +
         `</body></html>`,
       );
