@@ -41,7 +41,7 @@ export default function LoginPage() {
           {/* ログインカード */}
           <div className="bg-discord-card rounded-2xl p-7 shadow-2xl border border-discord-border/50">
             <a
-              href="/auth/login"
+              href={`${API_BASE}/auth/login`}
               className="group flex w-full items-center justify-center gap-3 rounded-xl bg-discord-blurple px-6 py-3.5 text-base font-semibold text-white shadow-md shadow-discord-blurple/25 transition-all duration-200 hover:bg-discord-blurple-dark hover:-translate-y-0.5 hover:shadow-lg hover:shadow-discord-blurple/30 active:translate-y-0"
             >
               <DiscordLogo />
