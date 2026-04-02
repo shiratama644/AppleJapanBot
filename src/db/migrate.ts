@@ -40,6 +40,22 @@ export async function migrate(): Promise<void> {
       END IF;
     END $$`.execute(db);
 
+  // 旧スキーマで discord_id 単体が主キーになっている場合はそれを削除する。
+  // 複合ユニーク制約 (guild_id, discord_id) が存在する状態で古い単独PKが残っていると、
+  // 同じ discord_id を別ギルドで登録しようとしたとき ON CONFLICT が機能せずに
+  // 主キー違反になるため。
+  await sql`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'linked_players_pkey'
+          AND conrelid = 'linked_players'::regclass
+      ) THEN
+        ALTER TABLE linked_players DROP CONSTRAINT linked_players_pkey;
+      END IF;
+    END $$`.execute(db);
+
   // bot_config テーブル
   await db.schema
     .createTable('bot_config')
