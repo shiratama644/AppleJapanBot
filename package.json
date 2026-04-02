@@ -7,6 +7,7 @@
     "db:migrate": "tsx src/db/migrate.ts",
     "dev": "tsx watch src/index.ts",
     "dev:dashboard": "cd dashboard && pnpm dev",
+    "dev:all": "concurrently -n bot,dashboard -c cyan,magenta \"pnpm dev\" \"pnpm dev:dashboard\"",
     "build": "tsc && pnpm run build:dashboard",
     "build:dashboard": "cd dashboard && pnpm install --prefer-offline && pnpm run build && node -e \"const{rmSync,cpSync}=require('fs');rmSync('../dist/dashboard/public',{recursive:true,force:true});cpSync('out','../dist/dashboard/public',{recursive:true})\"",
     "start": "node dist/index.js"
@@ -27,6 +28,7 @@
     "@types/node": "^25.5.0",
     "@types/pg": "^8.20.0",
     "nodemon": "^3.1.14",
+    "concurrently": "^9.2.1",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   }
